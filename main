@@ -1,0 +1,113 @@
+fun main() {
+    while (true) {
+        println("1. Add matrices\n2. Multiply matrix by a constant\n3. Multiply matrices\n4. Transpose matrix" +
+                "\n5. Calculate a determinant\n6. Inverse matrix\n0. Exit\nYour choice:")
+        when (readLine()!!) {
+            "1", "Add" -> sumMatrix()
+            "2", "MltCons" -> mltCons()
+            "3", "MltMat" -> mltMatrix()
+            "4", "Transpose" -> trsMatrix()
+            "5", "Determinant" -> detMatrix()
+            "6", "Inverse" -> invMatrix()
+            "0", "Exit" -> return
+        }
+    }
+}
+fun sumMatrix() {
+    val (sizea, a) = createMatrix()
+    val (sizeb, b) = createMatrix()
+    if (sizea != sizeb) { println("The operation cannot be performed.") } else {
+        for (y in 0 until sizea[0]) { for (x in 0 until sizea[1]) { a[y][x] += b[y][x] } }
+        printResult(a)
+    }
+}
+fun mltCons() {
+    val (sizea, a) = createMatrix()
+    println("Enter constant:")
+    printResult(mltConsOperation(readLine()!!.toDouble(), sizea, a))
+}
+fun mltMatrix() {
+    val (sizea, a) = createMatrix()
+    val (sizeb, b) = createMatrix()
+    val c = Array(sizea[0]) { DoubleArray(sizeb[1]) }
+    if (sizea[1] != sizeb[0] || b.size != a[0].size) { println("The operation cannot be performed.")
+    } else {
+        for (y in 0 until sizea[0]) { for (x in 0 until sizeb[1]) { for (i in 0 until sizea[1]) { c[y][x] += a[y][i] * b[i][x] }}}
+        printResult(c)
+    }
+}
+fun trsMatrix() {
+    println("1. Main diagonal\n2. Side diagonal\n3. Vertical line\n4. Horizontal line\nYour choice:")
+    val input = readLine()!!
+    val (size, a) = createMatrix()
+    val c = Array(size[1]) { DoubleArray(size[0]) }
+    when (input) {
+        "1" -> for (y in 0 until size[1]) { for (x in 0 until size[0]) { c[y][x] = a[x][y] } }
+        "2" -> for (y in 0 until size[1]) { for (x in 0 until size[0]) { c[y][x] = a[size[0]-1-x][size[1]-1-y] } }
+        "3" -> for (y in 0 until size[1]) { for (x in 0 until size[0]) { c[y][x] = a[y][size[0]-1-x] } }
+        "4" -> for (y in 0 until size[1]) { for (x in 0 until size[0]) { c[y][x] = a[size[1]-1-y][x] } }
+    }
+    printResult(c)
+}
+fun detMatrix() {
+    val (size, a) = createMatrix()
+    if (size.size == 1 || size[0] != size[1]) println("The operation cannot be performed.")
+    else println("The result is:\n${det(size[0], a)}")
+}
+fun invMatrix() {
+    val (size, a) = createMatrix()
+    if (size.size != 2 || size[0] != size[1]) { println("The operation cannot be performed.") }
+    else if (det(size[0], a) == 0.0) { println("This matrix doesn't have an inverse.") }
+    else { printResult(mltConsOperation((1.0 / det(size[0], a)), size, inv(size, a))) }
+}
+fun mltConsOperation(cnst: Double, sizea: List<Int>, a: Array<DoubleArray>): Array<DoubleArray> {
+    for (y in 0 until sizea[0]) { for (x in 0 until sizea[1]) { a[y][x] = Math.round(a[y][x] * cnst * 100.0) / 100.0 }}
+    return a
+}
+fun det(size:Int, c: Array<DoubleArray>): Double {
+    var result = 0.0
+    if (size == 1) return c[0][0]
+    else {
+        val kalansize = size - 1
+        val kalan = Array(kalansize) { DoubleArray(kalansize) }
+        for (k in 0 until size) {
+            for (x in 0 until size) {
+                for (y in 0 until kalansize) {
+                    if (x > k) kalan[y][x-1] = c[y][x]
+                    if (x < k) kalan[y][x] = c[y][x]
+                }
+            }
+            result += c[size-1][k] * Math.pow(-1.0, (k + 1 + size).toDouble()) * det(kalansize, kalan)
+        }
+        return result
+    }
+}
+fun inv(size: List<Int>, a: Array<DoubleArray>): Array<DoubleArray> {
+    val kalansize = size[0] - 1
+    val kalan = Array(kalansize) { DoubleArray(kalansize) }
+    val c = Array(size[0]) { DoubleArray(size[1]) }
+    for (kx in 0 until size[1]){
+        for (ky in 0 until size[0]) {
+            for (x in 0 until kalansize) {
+                for (y in 0 until kalansize) {
+                    if (kx > x && ky > y) kalan[y][x] = a[y][x]
+                    if (kx <= x && ky > y) kalan[y][x] = a[y][x + 1]
+                    if (kx > x && ky <= y) kalan[y][x] = a[y + 1][x]
+                    if (kx <= x && ky <= y) kalan[y][x] = a[y + 1][x + 1]
+                }
+            }
+            c[ky][kx] = Math.pow(-1.0, (ky + kx).toDouble()) * det(kalansize, kalan)
+        }
+    }
+    val d = Array(size[0]) { DoubleArray(size[1]) }
+    for (y in 0 until size[1]) { for (x in 0 until size[0]) { d[y][x] = c[x][y] } }
+    return d
+}
+fun createMatrix(): Pair<List<Int>, Array<DoubleArray>> {
+    println("Enter size of matrix: ")
+    val size = readLine()!!.split(" ").map { it.toInt() }
+    println("Enter matrix:")
+    val matrix = Array(size[0]) { readLine()!!.split(" ").map { it.toDouble() }.toDoubleArray() }
+    return Pair(size, matrix)
+}
+fun printResult(r: Array<DoubleArray>) = println("The result is:").let { r.forEach { println(it.joinToString(" ")) } }
